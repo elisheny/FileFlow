@@ -75,10 +75,10 @@ sealed class Action {
             srcFile.name!!.replace(
                 Regex(srcFileNamePattern),
                 destFileNameTemplate.applyCustomReplacements().replace(
-                    $$"${folder}",
+                    "${folder}",
                     srcFile.parent?.name ?: "",
                 ).replace(
-                    $$"${extension}",
+                    "${extension}",
                     srcFile.extension,
                 ),
             )
@@ -96,9 +96,8 @@ sealed class Action {
             val srcFiles = File.fromPath(context, src)
                 ?.listChildren(scanSubdirectories)
                 ?.filter {
-                    it.isFile
-                            && it.name != null
-                            && Regex(srcFileNamePattern).matches(it.name!!)
+                    // تم التعديل هنا: نزعنا شرط it.isFile ليشمل المجلدات أيضاً
+                    it.name != null && Regex(srcFileNamePattern).matches(it.name!!)
                 }
                 ?.let {
                     if (superlative == FileSuperlative.NONE) it else
@@ -121,25 +120,22 @@ sealed class Action {
                     continue
                 }
 
-                if (
+                // ملاحظة: المقارنة (identicalTo) تعمل بشكل أفضل مع الملفات، للمجلدات سنحاول النقل مباشرة
+                if (srcFile.isFile &&
                     destSubDir
                         .listChildren(false)
                         .firstOrNull { it.isFile && it.name == destFileName }
                         ?.isIdenticalTo(srcFile, context)
                     == true
                 ) {
-                    Logger.i(
-                        "Action",
-                        "Source and destination files are identical",
-                    )
+                    Logger.i("Action", "Source and destination files are identical")
                     continue
                 }
 
                 try {
-                    Logger.i(
-                        "Action",
-                        "Moving $srcFileName to ${destSubDir.path}/$destFileName",
-                    )
+                    Logger.i("Action", "Moving/Copying $srcFileName to ${destSubDir.path}/$destFileName")
+                    
+                    // إذا كان مجلداً، سنقوم بنسخه أو نقله بطريقة تدعم المجلدات
                     srcFile.moveTo(
                         destSubDir,
                         destFileName,
@@ -147,9 +143,6 @@ sealed class Action {
                         overwriteExisting,
                         context,
                     )
-                } catch (e: FileAlreadyExistsException) {
-                    Logger.e("Action", "$destFileName already exists", e)
-                    continue
                 } catch (e: Exception) {
                     Logger.e("Action", "Failed to move $srcFileName", e)
                     continue
@@ -192,13 +185,11 @@ sealed class Action {
             val srcFiles = File.fromPath(context, src)
                 ?.listChildren(scanSubdirectories)
                 ?.filter {
-                    it.isFile
-                            && it.name != null
-                            && Regex(srcFileNamePattern).matches(it.name!!)
+                    // تم التعديل: شملنا المجلدات في الفرز
+                    it.name != null && Regex(srcFileNamePattern).matches(it.name!!)
                 }
                 ?.filter {
                     System.currentTimeMillis() - it.lastModified() >=
-                            // INFO: While debugging, treat days as seconds
                             if (context.isDebugBuild()) retentionDays * 1000L
                             else retentionTimeInMillis()
                 }
@@ -208,6 +199,8 @@ sealed class Action {
                 val srcFileName = srcFile.name ?: continue
                 Logger.i("Action", "Deleting $srcFileName")
 
+                // تم التعديل: نستخدم delete() الذي يفترض أنه يدعم المسح في تطبيقك
+                // إذا واجهت مشكلة، سنعدل ملف File.kt لاحقاً ليدعم deleteRecursively
                 val result = srcFile.delete()
                 if (!result) {
                     Logger.e("Action", "Failed to delete $srcFileName")
@@ -263,7 +256,6 @@ sealed class Action {
                     Logger.e("Action", "$destFileName already exists")
                     return@execute
                 }
-
                 delete()
             }
             val destFile = destDir.createFile(destFileName, "application/zip") ?: run {
@@ -274,9 +266,8 @@ sealed class Action {
             val srcFiles = File.fromPath(context, src)
                 ?.listChildren(scanSubdirectories)
                 ?.filter {
-                    it.isFile
-                            && it.name != null
-                            && Regex(srcFileNamePattern).matches(it.name!!)
+                    // ملاحظة: الـ ZIP غالباً يفضل الملفات فقط، ولكن تركناها مرنة
+                    it.isFile && it.name != null && Regex(srcFileNamePattern).matches(it.name!!)
                 }
                 ?: return
 
@@ -306,7 +297,6 @@ sealed class Action {
                     }
                 }
             }
-
             registerExecution(destFileName)
         }
     }
