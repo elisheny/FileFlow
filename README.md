@@ -32,4 +32,4 @@ FileFlow scans your files periodically and organizes them according to your rule
 ## Usage
 
 Refer to the [wiki](https://github.com/BURG3R5/FileFlow/wiki) for instructions, examples, tips, and
-FAQs.
+FAQs...
