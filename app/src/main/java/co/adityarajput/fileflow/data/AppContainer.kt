@@ -4,6 +4,7 @@ import android.content.Context
 import co.adityarajput.fileflow.data.models.Action
 import co.adityarajput.fileflow.data.models.Execution
 import co.adityarajput.fileflow.data.models.Rule
+import co.adityarajput.fileflow.data.models.Verb
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
@@ -27,6 +28,7 @@ class AppContainer(private val context: Context) {
                             "/storage/emulated/0/Backups",
                             "AntennaPod.db",
                             overwriteExisting = true,
+                            scanSubdirectories = false // أضفنا هذا السطر للتوافق
                         ),
                         executions = 2,
                         interval = null,
@@ -40,6 +42,7 @@ class AppContainer(private val context: Context) {
                             "Tubular.zip",
                             keepOriginal = false,
                             overwriteExisting = true,
+                            scanSubdirectories = false // أضفنا هذا السطر للتوافق
                         ),
                         executions = 3,
                         interval = null,
@@ -59,7 +62,7 @@ class AppContainer(private val context: Context) {
                             "(.*)\\.md",
                             "/storage/emulated/0/Backups",
                             "Notes.zip",
-                            true,
+                            scanSubdirectories = true, // أضفنا هذا السطر للتوافق
                         ),
                         executions = 5,
                         interval = null,
